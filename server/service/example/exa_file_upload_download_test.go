@@ -2,16 +2,24 @@ package example
 
 import (
 	"bytes"
-	"errors"
 	"mime/multipart"
 	"strings"
 	"testing"
 
+	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
 )
 
 func TestUpload(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Auto migrate file upload table
+	if err := global.GVA_DB.AutoMigrate(&example.ExaFileUploadAndDownload{}); err != nil {
+		t.Fatalf("Failed to migrate file upload table: %v", err)
+	}
+
 	tests := []struct {
 		name    string
 		file    example.ExaFileUploadAndDownload
@@ -104,7 +112,7 @@ func TestFindFile(t *testing.T) {
 			}
 
 			if tt.checkProps {
-				if file.ID != tt.id {
+				if file.GVA_MODEL.ID != tt.id {
 					t.Errorf("FindFile() file.ID = %v, want %v", file.ID, tt.id)
 				}
 				if file.Name == "" {
@@ -130,7 +138,7 @@ func TestDeleteFile(t *testing.T) {
 		{
 			name: "Test Delete Existing File",
 			file: example.ExaFileUploadAndDownload{
-				ID:   1,
+				GVA_MODEL: global.GVA_MODEL{ID: 1},
 				Name: "test.txt",
 				Key:  "test/test.txt",
 			},
@@ -139,7 +147,7 @@ func TestDeleteFile(t *testing.T) {
 		{
 			name: "Test Delete Non-existent File",
 			file: example.ExaFileUploadAndDownload{
-				ID:   999,
+				GVA_MODEL: global.GVA_MODEL{ID: 999},
 				Name: "nonexistent.txt",
 				Key:  "test/nonexistent.txt",
 			},
@@ -156,7 +164,7 @@ func TestDeleteFile(t *testing.T) {
 		{
 			name: "Test Delete File Without Key",
 			file: example.ExaFileUploadAndDownload{
-				ID:   1,
+				GVA_MODEL: global.GVA_MODEL{ID: 1},
 				Name: "test.txt",
 			},
 			wantErr: true,
@@ -183,7 +191,7 @@ func TestEditFileName(t *testing.T) {
 		{
 			name: "Test Edit Existing File Name",
 			file: example.ExaFileUploadAndDownload{
-				ID:   1,
+				GVA_MODEL: global.GVA_MODEL{ID: 1},
 				Name: "updated.txt",
 			},
 			wantErr: false,
@@ -191,7 +199,7 @@ func TestEditFileName(t *testing.T) {
 		{
 			name: "Test Edit Non-existent File Name",
 			file: example.ExaFileUploadAndDownload{
-				ID:   999,
+				GVA_MODEL: global.GVA_MODEL{ID: 999},
 				Name: "nonexistent.txt",
 			},
 			wantErr: true,
@@ -206,7 +214,7 @@ func TestEditFileName(t *testing.T) {
 		{
 			name: "Test Edit File With Empty Name",
 			file: example.ExaFileUploadAndDownload{
-				ID:   1,
+				GVA_MODEL: global.GVA_MODEL{ID: 1},
 				Name: "",
 			},
 			wantErr: true,

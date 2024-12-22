@@ -41,7 +41,10 @@ func (exa *CustomerService) CreateExaCustomer(e example.ExaCustomer) (err error)
 //@return: err error
 
 func (exa *CustomerService) DeleteExaCustomer(e example.ExaCustomer) (err error) {
-	err = global.GVA_DB.Delete(&e).Error
+	if e.ID == 0 {
+		return errors.New("customer ID cannot be empty")
+	}
+	err = global.GVA_DB.Where("id = ?", e.ID).Delete(&e).Error
 	return err
 }
 

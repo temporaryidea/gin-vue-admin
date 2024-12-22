@@ -7,6 +7,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/config"
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
+	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
@@ -23,9 +24,26 @@ func setupTestEnv(t *testing.T) func() {
 	}
 	
 	// Auto migrate the required tables
-	err = db.AutoMigrate(&example.ExaFile{}, &example.ExaFileChunk{}, &example.ExaCustomer{})
+	err = db.AutoMigrate(
+		&example.ExaFile{},
+		&example.ExaFileChunk{},
+		&example.ExaCustomer{},
+		&example.ExaFileUploadAndDownload{},
+		&system.SysAuthority{},
+	)
 	if err != nil {
 		t.Fatalf("Failed to migrate test database: %v", err)
+	}
+
+	// Create test authority
+	var parentId uint = 0
+	testAuth := system.SysAuthority{
+		AuthorityId: 1,
+		AuthorityName: "Test Authority",
+		ParentId: &parentId,
+	}
+	if err := db.Create(&testAuth).Error; err != nil {
+		t.Fatalf("Failed to create test authority: %v", err)
 	}
 
 	// Store original globals
