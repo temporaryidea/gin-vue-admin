@@ -1,40 +1,11 @@
 package example
 
 import (
-	"os"
 	"testing"
 
-	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
-
-func setupTestEnv(t *testing.T) func() {
-	// Create a temporary SQLite database for testing
-	tmpDB := t.TempDir() + "/test.db"
-	db, err := gorm.Open(sqlite.Open(tmpDB), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
-	}
-
-	// Store the original DB and replace it with test DB
-	originalDB := global.GVA_DB
-	global.GVA_DB = db
-
-	// Return cleanup function
-	return func() {
-		// Restore original DB
-		global.GVA_DB = originalDB
-		// Remove temporary database file
-		sqlDB, err := db.DB()
-		if err == nil {
-			sqlDB.Close()
-		}
-		os.Remove(tmpDB)
-	}
-}
 
 func TestCreateExaCustomer(t *testing.T) {
 	cleanup := setupTestEnv(t)
