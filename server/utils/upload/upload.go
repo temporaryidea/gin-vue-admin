@@ -28,6 +28,12 @@ func RegisterOssType(name string, constructor OssConstructor) {
 // Author [SliverHorn](https://github.com/SliverHorn)
 // Author [ccfish86](https://github.com/ccfish86)
 func NewOss() OSS {
+	// First check registered OSS types
+	if constructor, ok := ossTypes[global.GVA_CONFIG.System.OssType]; ok {
+		return constructor()
+	}
+
+	// Fall back to built-in types
 	switch global.GVA_CONFIG.System.OssType {
 	case "local":
 		return &Local{}
