@@ -100,6 +100,7 @@ func TestDeleteExaCustomer(t *testing.T) {
 		{
 			name: "Test Delete Existing Customer",
 			e: example.ExaCustomer{
+				GVA_MODEL: global.GVA_MODEL{ID: 1},
 				CustomerName:       "Test Customer",
 				CustomerPhoneData: "1234567890",
 				SysUserID:         1,
@@ -165,6 +166,7 @@ func TestUpdateExaCustomer(t *testing.T) {
 		{
 			name: "Test Update Valid Customer",
 			e: &example.ExaCustomer{
+				GVA_MODEL: global.GVA_MODEL{ID: 1},
 				CustomerName:       "Updated Customer",
 				CustomerPhoneData: "9876543210",
 				SysUserID:         1,

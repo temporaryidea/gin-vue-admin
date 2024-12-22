@@ -14,6 +14,16 @@ type OSS interface {
 	DeleteFile(key string) error
 }
 
+// OssConstructor is a function that creates a new OSS instance
+type OssConstructor func() OSS
+
+var ossTypes = make(map[string]OssConstructor)
+
+// RegisterOssType registers a new OSS type with its constructor
+func RegisterOssType(name string, constructor OssConstructor) {
+	ossTypes[name] = constructor
+}
+
 // NewOss OSS的实例化方法
 // Author [SliverHorn](https://github.com/SliverHorn)
 // Author [ccfish86](https://github.com/ccfish86)
