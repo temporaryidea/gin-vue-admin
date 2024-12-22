@@ -1,6 +1,8 @@
 package example
 
 import (
+	"errors"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
@@ -19,6 +21,15 @@ var CustomerServiceApp = new(CustomerService)
 //@return: err error
 
 func (exa *CustomerService) CreateExaCustomer(e example.ExaCustomer) (err error) {
+	if e.CustomerName == "" {
+		return errors.New("customer name cannot be empty")
+	}
+	if e.CustomerPhoneData == "" {
+		return errors.New("customer phone cannot be empty")
+	}
+	if e.SysUserID == 0 {
+		return errors.New("system user ID cannot be empty")
+	}
 	err = global.GVA_DB.Create(&e).Error
 	return err
 }

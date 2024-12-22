@@ -19,6 +19,16 @@ var FileUploadAndDownloadServiceApp = new(FileUploadAndDownloadService)
 //@return: file model.ExaFile, err error
 
 func (e *FileUploadAndDownloadService) FindOrCreateFile(fileMd5 string, fileName string, chunkTotal int) (file example.ExaFile, err error) {
+	if fileMd5 == "" {
+		return file, errors.New("file md5 cannot be empty")
+	}
+	if fileName == "" {
+		return file, errors.New("file name cannot be empty")
+	}
+	if chunkTotal <= 0 {
+		return file, errors.New("chunk total must be positive")
+	}
+
 	var cfile example.ExaFile
 	cfile.FileMd5 = fileMd5
 	cfile.FileName = fileName
@@ -41,6 +51,19 @@ func (e *FileUploadAndDownloadService) FindOrCreateFile(fileMd5 string, fileName
 //@return: error
 
 func (e *FileUploadAndDownloadService) CreateFileChunk(id uint, fileChunkPath string, fileChunkNumber int) error {
+	if id == 0 {
+		return errors.New("invalid file ID")
+	}
+	if fileChunkPath == "" {
+		return errors.New("chunk path cannot be empty")
+	}
+	if fileChunkNumber <= 0 {
+		return errors.New("chunk number must be positive")
+	}
+	if fileChunkNumber > 100000 { // reasonable limit for chunk numbers
+		return errors.New("chunk number too large")
+	}
+
 	var chunk example.ExaFileChunk
 	chunk.FileChunkPath = fileChunkPath
 	chunk.ExaFileID = id
@@ -56,6 +79,13 @@ func (e *FileUploadAndDownloadService) CreateFileChunk(id uint, fileChunkPath st
 //@return: error
 
 func (e *FileUploadAndDownloadService) DeleteFileChunk(fileMd5 string, filePath string) error {
+	if fileMd5 == "" {
+		return errors.New("file md5 cannot be empty")
+	}
+	if filePath == "" {
+		return errors.New("file path cannot be empty")
+	}
+
 	var chunks []example.ExaFileChunk
 	var file example.ExaFile
 	err := global.GVA_DB.Where("file_md5 = ?", fileMd5).First(&file).

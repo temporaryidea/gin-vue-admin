@@ -1,56 +1,133 @@
 package example
 
 import (
+	"os"
 	"testing"
 
+	"github.com/flipped-aurora/gin-vue-admin/server/config"
+	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
+func setupTestEnv(t *testing.T) func() {
+	// Create a temporary SQLite database file
+	tmpDB := t.TempDir() + "/test.db"
+	
+	db, err := gorm.Open(sqlite.Open(tmpDB), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Failed to connect to test database: %v", err)
+	}
+	
+	// Auto migrate the required tables
+	err = db.AutoMigrate(&example.ExaFile{}, &example.ExaFileChunk{})
+	if err != nil {
+		t.Fatalf("Failed to migrate test database: %v", err)
+	}
+
+	// Store original globals
+	originalDB := global.GVA_DB
+	originalLogger := global.GVA_LOG
+	originalConfig := global.GVA_CONFIG
+	originalVP := global.GVA_VP
+	originalDBList := global.GVA_DBList
+	originalActiveDBName := global.GVA_ACTIVE_DBNAME
+
+	// Set up test globals
+	global.GVA_DB = db
+	global.GVA_LOG, _ = zap.NewDevelopment()
+	global.GVA_VP = viper.New()
+	global.GVA_CONFIG = config.Server{
+		Zap: config.Zap{
+			Level: "info",
+		},
+		System: config.System{
+			DbType: "sqlite",
+		},
+	}
+	
+	// Initialize database list with test database
+	global.GVA_DBList = map[string]*gorm.DB{
+		"default": db,
+	}
+	defaultDBName := "default"
+	global.GVA_ACTIVE_DBNAME = &defaultDBName
+
+	// Return cleanup function
+	return func() {
+		global.GVA_DB = originalDB
+		global.GVA_LOG = originalLogger
+		global.GVA_CONFIG = originalConfig
+		global.GVA_VP = originalVP
+		global.GVA_DBList = originalDBList
+		global.GVA_ACTIVE_DBNAME = originalActiveDBName
+		sqlDB, err := db.DB()
+		if err == nil {
+			sqlDB.Close()
+		}
+		os.Remove(tmpDB)
+	}
+}
+
 func TestFindOrCreateFile(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 	tests := []struct {
 		name       string
-		fileMd5    string
-		fileName   string
+		file       example.ExaFile
 		chunkTotal int
 		wantErr    bool
 		checkFile  bool // whether to check file properties
 	}{
 		{
 			name:       "Test Create New File Success",
-			fileMd5:    "test123md5",
-			fileName:   "test.txt",
+			file: example.ExaFile{
+				FileMd5:  "test123md5",
+				FileName: "test.txt",
+			},
 			chunkTotal: 3,
 			wantErr:    false,
 			checkFile:  true,
 		},
 		{
 			name:       "Test Empty MD5",
-			fileMd5:    "",
-			fileName:   "test.txt",
+			file: example.ExaFile{
+				FileMd5:  "",
+				FileName: "test.txt",
+			},
 			chunkTotal: 3,
 			wantErr:    true,
 			checkFile:  false,
 		},
 		{
 			name:       "Test Empty Filename",
-			fileMd5:    "test123md5",
-			fileName:   "",
+			file: example.ExaFile{
+				FileMd5:  "test123md5",
+				FileName: "",
+			},
 			chunkTotal: 3,
 			wantErr:    true,
 			checkFile:  false,
 		},
 		{
 			name:       "Test Invalid Chunk Total",
-			fileMd5:    "test123md5",
-			fileName:   "test.txt",
+			file: example.ExaFile{
+				FileMd5:  "test123md5",
+				FileName: "test.txt",
+			},
 			chunkTotal: 0,
 			wantErr:    true,
 			checkFile:  false,
 		},
 		{
 			name:       "Test Duplicate MD5 Finished File",
-			fileMd5:    "duplicate123",
-			fileName:   "test2.txt",
+			file: example.ExaFile{
+				FileMd5:  "duplicate123",
+				FileName: "test2.txt",
+			},
 			chunkTotal: 3,
 			wantErr:    false,
 			checkFile:  true,
@@ -60,7 +137,7 @@ func TestFindOrCreateFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			service := &FileUploadAndDownloadService{}
-			file, err := service.FindOrCreateFile(tt.fileMd5, tt.fileName, tt.chunkTotal)
+			file, err := service.FindOrCreateFile(tt.file.FileMd5, tt.file.FileName, tt.chunkTotal)
 			
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FindOrCreateFile() error = %v, wantErr %v", err, tt.wantErr)
@@ -68,11 +145,11 @@ func TestFindOrCreateFile(t *testing.T) {
 			}
 
 			if tt.checkFile {
-				if file.FileMd5 != tt.fileMd5 {
-					t.Errorf("FindOrCreateFile() file.FileMd5 = %v, want %v", file.FileMd5, tt.fileMd5)
+				if file.FileMd5 != tt.file.FileMd5 {
+					t.Errorf("FindOrCreateFile() file.FileMd5 = %v, want %v", file.FileMd5, tt.file.FileMd5)
 				}
-				if file.FileName != tt.fileName {
-					t.Errorf("FindOrCreateFile() file.FileName = %v, want %v", file.FileName, tt.fileName)
+				if file.FileName != tt.file.FileName {
+					t.Errorf("FindOrCreateFile() file.FileName = %v, want %v", file.FileName, tt.file.FileName)
 				}
 				if file.ChunkTotal != tt.chunkTotal {
 					t.Errorf("FindOrCreateFile() file.ChunkTotal = %v, want %v", file.ChunkTotal, tt.chunkTotal)
@@ -83,44 +160,46 @@ func TestFindOrCreateFile(t *testing.T) {
 }
 
 func TestCreateFileChunk(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 	tests := []struct {
 		name            string
-		id              uint
+		file            example.ExaFile
 		fileChunkPath   string
 		fileChunkNumber int
 		wantErr         bool
 	}{
 		{
 			name:            "Test Create File Chunk Success",
-			id:              1,
+			file:            example.ExaFile{GVA_MODEL: global.GVA_MODEL{ID: 1}},
 			fileChunkPath:   "/tmp/chunk1",
 			fileChunkNumber: 1,
 			wantErr:         false,
 		},
 		{
 			name:            "Test Invalid File ID",
-			id:              0,
+			file:            example.ExaFile{GVA_MODEL: global.GVA_MODEL{ID: 0}},
 			fileChunkPath:   "/tmp/chunk1",
 			fileChunkNumber: 1,
 			wantErr:         true,
 		},
 		{
 			name:            "Test Empty Chunk Path",
-			id:              1,
+			file:            example.ExaFile{GVA_MODEL: global.GVA_MODEL{ID: 1}},
 			fileChunkPath:   "",
 			fileChunkNumber: 1,
 			wantErr:         true,
 		},
 		{
 			name:            "Test Invalid Chunk Number",
-			id:              1,
+			file:            example.ExaFile{GVA_MODEL: global.GVA_MODEL{ID: 1}},
 			fileChunkPath:   "/tmp/chunk1",
 			fileChunkNumber: -1,
 			wantErr:         true,
 		},
 		{
 			name:            "Test Large Chunk Number",
-			id:              1,
+			file:            example.ExaFile{GVA_MODEL: global.GVA_MODEL{ID: 1}},
 			fileChunkPath:   "/tmp/chunk1",
 			fileChunkNumber: 1000000,
 			wantErr:         true,
@@ -130,7 +209,7 @@ func TestCreateFileChunk(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			service := &FileUploadAndDownloadService{}
-			err := service.CreateFileChunk(tt.id, tt.fileChunkPath, tt.fileChunkNumber)
+			err := service.CreateFileChunk(tt.file.ID, tt.fileChunkPath, tt.fileChunkNumber)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateFileChunk() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -139,6 +218,29 @@ func TestCreateFileChunk(t *testing.T) {
 }
 
 func TestDeleteFileChunk(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Create a test file for deletion test
+	testFile := example.ExaFile{
+		FileMd5:    "test123md5",
+		FileName:   "test.txt",
+		ChunkTotal: 5,
+	}
+	if err := global.GVA_DB.Create(&testFile).Error; err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	// Create test chunks
+	testChunk := example.ExaFileChunk{
+		ExaFileID:       testFile.ID,
+		FileChunkNumber: 1,
+		FileChunkPath:   "/tmp/chunk1",
+	}
+	if err := global.GVA_DB.Create(&testChunk).Error; err != nil {
+		t.Fatalf("Failed to create test chunk: %v", err)
+	}
+
 	tests := []struct {
 		name     string
 		fileMd5  string

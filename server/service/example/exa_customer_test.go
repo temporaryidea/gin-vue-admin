@@ -1,14 +1,50 @@
 package example
 
 import (
+	"os"
 	"testing"
 
+	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
+func setupTestEnv(t *testing.T) func() {
+	// Create a temporary SQLite database for testing
+	tmpDB := t.TempDir() + "/test.db"
+	db, err := gorm.Open(sqlite.Open(tmpDB), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Failed to open database: %v", err)
+	}
+
+	// Store the original DB and replace it with test DB
+	originalDB := global.GVA_DB
+	global.GVA_DB = db
+
+	// Return cleanup function
+	return func() {
+		// Restore original DB
+		global.GVA_DB = originalDB
+		// Remove temporary database file
+		sqlDB, err := db.DB()
+		if err == nil {
+			sqlDB.Close()
+		}
+		os.Remove(tmpDB)
+	}
+}
+
 func TestCreateExaCustomer(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Auto migrate customer table
+	if err := global.GVA_DB.AutoMigrate(&example.ExaCustomer{}); err != nil {
+		t.Fatalf("Failed to migrate customer table: %v", err)
+	}
+
 	tests := []struct {
 		name    string
 		e       example.ExaCustomer
@@ -65,6 +101,25 @@ func TestCreateExaCustomer(t *testing.T) {
 }
 
 func TestDeleteExaCustomer(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Auto migrate customer table
+	if err := global.GVA_DB.AutoMigrate(&example.ExaCustomer{}); err != nil {
+		t.Fatalf("Failed to migrate customer table: %v", err)
+	}
+
+	// Create test customer for deletion
+	testCustomer := example.ExaCustomer{
+		CustomerName:       "Test Customer",
+		CustomerPhoneData: "1234567890",
+		SysUserID:         1,
+		SysUserAuthorityID: 1,
+	}
+	if err := global.GVA_DB.Create(&testCustomer).Error; err != nil {
+		t.Fatalf("Failed to create test customer: %v", err)
+	}
+
 	tests := []struct {
 		name    string
 		e       example.ExaCustomer
@@ -111,6 +166,25 @@ func TestDeleteExaCustomer(t *testing.T) {
 
 
 func TestUpdateExaCustomer(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Auto migrate customer table
+	if err := global.GVA_DB.AutoMigrate(&example.ExaCustomer{}); err != nil {
+		t.Fatalf("Failed to migrate customer table: %v", err)
+	}
+
+	// Create test customer for update
+	testCustomer := example.ExaCustomer{
+		CustomerName:       "Original Name",
+		CustomerPhoneData: "1234567890",
+		SysUserID:         1,
+		SysUserAuthorityID: 1,
+	}
+	if err := global.GVA_DB.Create(&testCustomer).Error; err != nil {
+		t.Fatalf("Failed to create test customer: %v", err)
+	}
+
 	tests := []struct {
 		name    string
 		e       *example.ExaCustomer
@@ -160,6 +234,25 @@ func TestUpdateExaCustomer(t *testing.T) {
 }
 
 func TestGetExaCustomer(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Auto migrate customer table
+	if err := global.GVA_DB.AutoMigrate(&example.ExaCustomer{}); err != nil {
+		t.Fatalf("Failed to migrate customer table: %v", err)
+	}
+
+	// Create test customer for retrieval
+	testCustomer := example.ExaCustomer{
+		CustomerName:       "Test Customer",
+		CustomerPhoneData: "1234567890",
+		SysUserID:         1,
+		SysUserAuthorityID: 1,
+	}
+	if err := global.GVA_DB.Create(&testCustomer).Error; err != nil {
+		t.Fatalf("Failed to create test customer: %v", err)
+	}
+
 	tests := []struct {
 		name       string
 		id         uint
@@ -206,6 +299,35 @@ func TestGetExaCustomer(t *testing.T) {
 }
 
 func TestGetCustomerInfoList(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Auto migrate customer table
+	if err := global.GVA_DB.AutoMigrate(&example.ExaCustomer{}); err != nil {
+		t.Fatalf("Failed to migrate customer table: %v", err)
+	}
+
+	// Create multiple test customers for list
+	testCustomers := []example.ExaCustomer{
+		{
+			CustomerName:       "Customer 1",
+			CustomerPhoneData: "1234567890",
+			SysUserID:         1,
+			SysUserAuthorityID: 1,
+		},
+		{
+			CustomerName:       "Customer 2",
+			CustomerPhoneData: "0987654321",
+			SysUserID:         2,
+			SysUserAuthorityID: 1,
+		},
+	}
+	for _, customer := range testCustomers {
+		if err := global.GVA_DB.Create(&customer).Error; err != nil {
+			t.Fatalf("Failed to create test customer: %v", err)
+		}
+	}
+
 	tests := []struct {
 		name                string
 		sysUserAuthorityID uint
