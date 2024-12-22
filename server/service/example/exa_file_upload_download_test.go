@@ -76,6 +76,25 @@ func TestUpload(t *testing.T) {
 }
 
 func TestFindFile(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Auto migrate file upload table
+	if err := global.GVA_DB.AutoMigrate(&example.ExaFileUploadAndDownload{}); err != nil {
+		t.Fatalf("Failed to migrate file upload table: %v", err)
+	}
+
+	// Create test file record
+	testFile := example.ExaFileUploadAndDownload{
+		Name: "test.txt",
+		Url:  "http://example.com/test.txt",
+		Tag:  "txt",
+		Key:  "test/test.txt",
+	}
+	if err := global.GVA_DB.Create(&testFile).Error; err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
 	tests := []struct {
 		name       string
 		id         uint

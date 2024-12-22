@@ -18,6 +18,15 @@ import (
 //@return: error
 
 func (e *FileUploadAndDownloadService) Upload(file example.ExaFileUploadAndDownload) error {
+	if file.Name == "" {
+		return errors.New("file name is required")
+	}
+	if file.Url == "" {
+		return errors.New("file URL is required")
+	}
+	if file.Key == "" {
+		return errors.New("file key is required")
+	}
 	return global.GVA_DB.Create(&file).Error
 }
 
