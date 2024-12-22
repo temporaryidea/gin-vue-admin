@@ -18,6 +18,15 @@ import (
 //@return: error
 
 func (e *FileUploadAndDownloadService) Upload(file example.ExaFileUploadAndDownload) error {
+	if file.Name == "" {
+		return errors.New("file name is required")
+	}
+	if file.Url == "" {
+		return errors.New("file URL is required")
+	}
+	if file.Key == "" {
+		return errors.New("file key is required")
+	}
 	return global.GVA_DB.Create(&file).Error
 }
 
@@ -40,11 +49,19 @@ func (e *FileUploadAndDownloadService) FindFile(id uint) (example.ExaFileUploadA
 //@return: err error
 
 func (e *FileUploadAndDownloadService) DeleteFile(file example.ExaFileUploadAndDownload) (err error) {
+	if file.ID == 0 {
+		return errors.New("file ID cannot be empty")
+	}
+	if file.Key == "" {
+		return errors.New("file key cannot be empty")
+	}
+
 	var fileFromDb example.ExaFileUploadAndDownload
 	fileFromDb, err = e.FindFile(file.ID)
 	if err != nil {
-		return
+		return err
 	}
+
 	oss := upload.NewOss()
 	if err = oss.DeleteFile(fileFromDb.Key); err != nil {
 		return errors.New("文件删除失败")
@@ -55,8 +72,17 @@ func (e *FileUploadAndDownloadService) DeleteFile(file example.ExaFileUploadAndD
 
 // EditFileName 编辑文件名或者备注
 func (e *FileUploadAndDownloadService) EditFileName(file example.ExaFileUploadAndDownload) (err error) {
+	if file.ID == 0 {
+		return errors.New("file ID cannot be empty")
+	}
+	if file.Name == "" {
+		return errors.New("file name cannot be empty")
+	}
 	var fileFromDb example.ExaFileUploadAndDownload
-	return global.GVA_DB.Where("id = ?", file.ID).First(&fileFromDb).Update("name", file.Name).Error
+	if err = global.GVA_DB.Where("id = ?", file.ID).First(&fileFromDb).Error; err != nil {
+		return err
+	}
+	return global.GVA_DB.Model(&fileFromDb).Update("name", file.Name).Error
 }
 
 //@author: [piexlmax](https://github.com/piexlmax)

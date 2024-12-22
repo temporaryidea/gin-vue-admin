@@ -14,10 +14,26 @@ type OSS interface {
 	DeleteFile(key string) error
 }
 
+// OssConstructor is a function that creates a new OSS instance
+type OssConstructor func() OSS
+
+var ossTypes = make(map[string]OssConstructor)
+
+// RegisterOssType registers a new OSS type with its constructor
+func RegisterOssType(name string, constructor OssConstructor) {
+	ossTypes[name] = constructor
+}
+
 // NewOss OSS的实例化方法
 // Author [SliverHorn](https://github.com/SliverHorn)
 // Author [ccfish86](https://github.com/ccfish86)
 func NewOss() OSS {
+	// First check registered OSS types
+	if constructor, ok := ossTypes[global.GVA_CONFIG.System.OssType]; ok {
+		return constructor()
+	}
+
+	// Fall back to built-in types
 	switch global.GVA_CONFIG.System.OssType {
 	case "local":
 		return &Local{}

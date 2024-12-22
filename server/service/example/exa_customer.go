@@ -1,6 +1,8 @@
 package example
 
 import (
+	"errors"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
@@ -19,6 +21,15 @@ var CustomerServiceApp = new(CustomerService)
 //@return: err error
 
 func (exa *CustomerService) CreateExaCustomer(e example.ExaCustomer) (err error) {
+	if e.CustomerName == "" {
+		return errors.New("customer name cannot be empty")
+	}
+	if e.CustomerPhoneData == "" {
+		return errors.New("customer phone cannot be empty")
+	}
+	if e.SysUserID == 0 {
+		return errors.New("system user ID cannot be empty")
+	}
 	err = global.GVA_DB.Create(&e).Error
 	return err
 }
@@ -30,7 +41,10 @@ func (exa *CustomerService) CreateExaCustomer(e example.ExaCustomer) (err error)
 //@return: err error
 
 func (exa *CustomerService) DeleteExaCustomer(e example.ExaCustomer) (err error) {
-	err = global.GVA_DB.Delete(&e).Error
+	if e.ID == 0 {
+		return errors.New("customer ID cannot be empty")
+	}
+	err = global.GVA_DB.Where("id = ?", e.ID).Delete(&e).Error
 	return err
 }
 
@@ -41,6 +55,22 @@ func (exa *CustomerService) DeleteExaCustomer(e example.ExaCustomer) (err error)
 //@return: err error
 
 func (exa *CustomerService) UpdateExaCustomer(e *example.ExaCustomer) (err error) {
+	if e == nil {
+		return errors.New("customer cannot be nil")
+	}
+	if e.ID == 0 {
+		return errors.New("customer ID cannot be empty")
+	}
+	if e.CustomerName == "" {
+		return errors.New("customer name cannot be empty")
+	}
+	if e.CustomerPhoneData == "" {
+		return errors.New("customer phone cannot be empty")
+	}
+	var existing example.ExaCustomer
+	if err = global.GVA_DB.Where("id = ?", e.ID).First(&existing).Error; err != nil {
+		return err
+	}
 	err = global.GVA_DB.Save(e).Error
 	return err
 }
@@ -63,6 +93,13 @@ func (exa *CustomerService) GetExaCustomer(id uint) (customer example.ExaCustome
 //@return: list interface{}, total int64, err error
 
 func (exa *CustomerService) GetCustomerInfoList(sysUserAuthorityID uint, info request.PageInfo) (list interface{}, total int64, err error) {
+	if info.Page <= 0 {
+		return nil, 0, errors.New("page must be greater than 0")
+	}
+	if info.PageSize <= 0 {
+		return nil, 0, errors.New("page size must be greater than 0")
+	}
+	
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
 	db := global.GVA_DB.Model(&example.ExaCustomer{})

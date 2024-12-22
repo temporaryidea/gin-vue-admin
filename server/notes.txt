@@ -1,0 +1,24 @@
+# Service/Example Files Analysis
+
+## Files to Test
+1. enter.go - Service group initialization
+2. exa_breakpoint_continue.go - Breakpoint continuation service
+3. exa_customer.go - Customer management service
+4. exa_file_upload_download.go - File upload/download service
+
+## Test Coverage Requirements
+- Need to verify test patterns from existing tests
+- Need to understand dependencies and interfaces
+- Need to determine mock requirements
+
+## Questions to Answer
+1. What is the purpose and functionality of each service?
+2. What are the existing test patterns/conventions?
+3. What dependencies and interfaces are used?
+4. What test coverage is expected?
+5. Should mocks be used for external dependencies?
+
+## Next Steps
+1. Analyze existing test files for patterns
+2. Document service dependencies
+3. Plan test coverage approach
