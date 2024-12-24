@@ -22,6 +22,7 @@ type ApiGroup struct {
 	AutoCodeHistoryApi
 	AutoCodeTemplateApi
 	SysParamsApi
+	AlipayApi
 }
 
 var (
@@ -44,4 +45,5 @@ var (
 	autoCodePackageService  = service.ServiceGroupApp.SystemServiceGroup.AutoCodePackage
 	autoCodeHistoryService  = service.ServiceGroupApp.SystemServiceGroup.AutoCodeHistory
 	autoCodeTemplateService = service.ServiceGroupApp.SystemServiceGroup.AutoCodeTemplate
+	alipayService          = service.ServiceGroupApp.SystemServiceGroup.AlipayService
 )

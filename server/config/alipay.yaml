@@ -1,0 +1,8 @@
+# Alipay Configuration
+# Note: These are placeholder values for development
+# Replace with actual credentials before production deployment
+alipay:
+  app_id: "2021000000000000"  # Placeholder App ID
+  private_key: "PLACEHOLDER_PRIVATE_KEY"  # Will be replaced with actual private key
+  public_key: "PLACEHOLDER_PUBLIC_KEY"    # Will be replaced with actual Alipay public key
+  sandbox_mode: true  # Enable sandbox mode for development
