@@ -1,6 +1,7 @@
 package system
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/smartwalle/alipay/v3"
@@ -64,7 +65,7 @@ func (s *AlipayService) GenerateQRCode(orderId string, amount float64, subject s
 	}
 
 	// Execute the request
-	rsp, err := s.Client.TradePreCreate(p)
+	rsp, err := s.Client.TradePreCreate(context.Background(), p)
 	if err != nil {
 		return "", fmt.Errorf("failed to create Alipay trade: %v", err)
 	}
@@ -88,7 +89,7 @@ func (s *AlipayService) QueryPaymentStatus(orderId string) (string, error) {
 	}
 
 	// Execute the request
-	rsp, err := s.Client.TradeQuery(p)
+	rsp, err := s.Client.TradeQuery(context.Background(), p)
 	if err != nil {
 		return "", fmt.Errorf("failed to query Alipay trade: %v", err)
 	}
@@ -98,7 +99,7 @@ func (s *AlipayService) QueryPaymentStatus(orderId string) (string, error) {
 	}
 
 
-	return rsp.TradeStatus, nil
+	return string(rsp.TradeStatus), nil
 }
 
 // Initialize initializes the AlipayService singleton
