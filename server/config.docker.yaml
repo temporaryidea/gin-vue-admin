@@ -158,6 +158,15 @@ aliyun-oss:
   bucket-url: yourBucketUrl
   base-path: yourBasePath
 
+# alipay configuration
+alipay:
+  app_id: "2021000000000000"
+  private_key: "your-private-key"
+  public_key: "your-public-key"
+  notify_url: "https://backend-web-app-ca74ufzk.fly.dev/api/v1/payment/notify"
+  return_url: "https://frontend-web-app-ca74ufzk.devinapps.com/payment/success"
+  sandbox_mode: true
+
 # tencent cos configuration
 tencent-cos:
   bucket: xxxxx-10005608
@@ -206,15 +215,10 @@ Timer:
 # 跨域配置
 # 需要配合 server/initialize/router.go -> `Router.Use(middleware.CorsByRules())` 使用
 cors:
-  mode: whitelist # 放行模式: allow-all, 放行全部; whitelist, 白名单模式, 来自白名单内域名的请求添加 cors 头; strict-whitelist 严格白名单模式, 白名单外的请求一律拒绝
+  mode: whitelist
   whitelist:
-    - allow-origin: example1.com
-      allow-headers: content-type
-      allow-methods: GET, POST
-      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
-      allow-credentials: true # 布尔值
-    - allow-origin: example2.com
-      allow-headers: content-type
-      allow-methods: GET, POST
-      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
-      allow-credentials: true # 布尔值
+    - allow-origin: frontend-web-app-ca74ufzk.devinapps.com
+      allow-headers: content-type,authorization
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, Authorization
+      allow-credentials: true
