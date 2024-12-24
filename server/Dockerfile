@@ -19,14 +19,13 @@ COPY --from=go-builder /go/src/github.com/flipped-aurora/gin-vue-admin/server/se
 COPY --from=go-builder /go/src/github.com/flipped-aurora/gin-vue-admin/server/resource ./resource/
 COPY --from=go-builder /go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml ./
 
-# Set timezone
+# Set timezone and install dependencies
 ENV TZ=Asia/Shanghai
 RUN apt-get update && apt-get install -y tzdata \
     && ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Install Python dependencies directly
+RUN pip install fastapi==0.109.2 uvicorn==0.27.1 httpx==0.26.0
 
 # Copy FastAPI app
 COPY proxy.py .
