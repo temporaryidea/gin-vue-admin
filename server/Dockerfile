@@ -1,4 +1,4 @@
-FROM golang:alpine as builder
+FROM golang:alpine as go-builder
 
 WORKDIR /go/src/github.com/flipped-aurora/gin-vue-admin/server
 COPY . .
@@ -10,22 +10,29 @@ RUN go env -w GO111MODULE=on \
     && go mod tidy \
     && go build -o server .
 
-FROM alpine:latest
+FROM python:3.12-slim
 
-LABEL MAINTAINER="SliverHorn@sliver_horn@qq.com"
-# 设置时区
+WORKDIR /app
+
+# Install Go binary and dependencies
+COPY --from=go-builder /go/src/github.com/flipped-aurora/gin-vue-admin/server/server ./
+COPY --from=go-builder /go/src/github.com/flipped-aurora/gin-vue-admin/server/resource ./resource/
+COPY --from=go-builder /go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml ./
+
+# Set timezone
 ENV TZ=Asia/Shanghai
-RUN apk update && apk add --no-cache tzdata openntpd \
+RUN apt-get update && apt-get install -y tzdata \
     && ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-WORKDIR /go/src/github.com/flipped-aurora/gin-vue-admin/server
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-COPY --from=0 /go/src/github.com/flipped-aurora/gin-vue-admin/server/server ./
-COPY --from=0 /go/src/github.com/flipped-aurora/gin-vue-admin/server/resource ./resource/
-COPY --from=0 /go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml ./
+# Copy FastAPI app
+COPY app ./app/
 
-# 挂载目录：如果使用了sqlite数据库，容器命令示例：docker run -d -v /宿主机路径/gva.db:/go/src/github.com/flipped-aurora/gin-vue-admin/server/gva.db -p 8888:8888 --name gva-server-v1 gva-server:1.0
-# VOLUME ["/go/src/github.com/flipped-aurora/gin-vue-admin/server"]
-
+EXPOSE 8000
 EXPOSE 8888
-ENTRYPOINT ./server -c config.docker.yaml
+
+# Start both services
+CMD ./server -c config.docker.yaml & python -m app.main
