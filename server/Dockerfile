@@ -1,31 +1,31 @@
-FROM golang:alpine as builder
+FROM golang:1.22-alpine AS builder
 
-WORKDIR /go/src/github.com/flipped-aurora/gin-vue-admin/server
+WORKDIR /app
+
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+COPY go.work ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy the source code
 COPY . .
 
-RUN go env -w GO111MODULE=on \
-    && go env -w GOPROXY=https://goproxy.cn,direct \
-    && go env -w CGO_ENABLED=0 \
-    && go env \
-    && go mod tidy \
-    && go build -o server .
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -o server .
 
+# Final stage
 FROM alpine:latest
 
-LABEL MAINTAINER="SliverHorn@sliver_horn@qq.com"
-# 设置时区
-ENV TZ=Asia/Shanghai
-RUN apk update && apk add --no-cache tzdata openntpd \
-    && ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+WORKDIR /app
 
-WORKDIR /go/src/github.com/flipped-aurora/gin-vue-admin/server
-
-COPY --from=0 /go/src/github.com/flipped-aurora/gin-vue-admin/server/server ./
-COPY --from=0 /go/src/github.com/flipped-aurora/gin-vue-admin/server/resource ./resource/
-COPY --from=0 /go/src/github.com/flipped-aurora/gin-vue-admin/server/config.docker.yaml ./
-
-# 挂载目录：如果使用了sqlite数据库，容器命令示例：docker run -d -v /宿主机路径/gva.db:/go/src/github.com/flipped-aurora/gin-vue-admin/server/gva.db -p 8888:8888 --name gva-server-v1 gva-server:1.0
-# VOLUME ["/go/src/github.com/flipped-aurora/gin-vue-admin/server"]
+# Copy binary from builder
+COPY --from=builder /app/server .
+# Copy config files
+COPY --from=builder /app/config.docker.yaml ./config.yaml
+COPY --from=builder /app/config/alipay.yaml ./config/
 
 EXPOSE 8888
-ENTRYPOINT ./server -c config.docker.yaml
+
+CMD ["./server"]

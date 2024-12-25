@@ -2,11 +2,13 @@ package initialize
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/songzhibin97/gkit/cache/local_cache"
 	"os"
 	"strings"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
+	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 )
 
@@ -28,5 +30,10 @@ func OtherInit() {
 		scanner := bufio.NewScanner(file)
 		scanner.Scan()
 		global.GVA_CONFIG.AutoCode.Module = strings.TrimPrefix(scanner.Text(), "module ")
+	}
+
+	// Initialize Alipay service
+	if err := system.AlipayServiceApp.Initialize(); err != nil {
+		panic(fmt.Errorf("failed to initialize Alipay service: %v", err))
 	}
 }

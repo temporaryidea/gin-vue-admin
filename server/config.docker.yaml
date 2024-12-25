@@ -158,6 +158,15 @@ aliyun-oss:
   bucket-url: yourBucketUrl
   base-path: yourBasePath
 
+# alipay configuration
+alipay:
+  app_id: "2021000122674017"
+  private_key: "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCY7c+qT8E1+UVD+S6VnYEqgd7BzCQcCZqE4KR5SqDGV3WLgL+JgSEjVZOhHupqGJqkVa/TcUv8vQyvHrh+50RAVVtFHZkBZHwXS9mlGA2f7Qqg6mB7ZqxA7/Pf4CZEZJLyBxXQqXH5EwZOe5D4MxqNJH4R4KBW6i6YvZqK0tgNXGbKkB4UMJ5wcZRhQZLb0ZqYUPUNcqAZHB3GZoSqEUxiVb3BxqGaEGPcZrMGvwbPJfJ7R4PGxrVBOVLvI4v8AyXwZgz3qV4dHgQzjXPf+yvzxQBgxS9k8nYqm7b8Vw3mCwwGhGHq4RLlAN0rZxF4p+qxH8I5ufyQWo5Yw7JbAgMBAAECggEABZN5HaIVkS4ruXGm0YBXvQXPD9YzWYEj0ZQGIJBgHX9MBxBVCJHYqnZkLi1F+RxLRYfHzjQJPmDhUvFYQeZ0QxPJtPqDZbhBzuXE5QgwuAHBuJBQQEDIg5PSKxZ8Q4DR4JjbvtVE4oHRY0Y5qBwjr1VIQvmDZvh+Qj4hAVQIDAQABAoIBAQCY7c+qT8E1+UVD+S6VnYEqgd7BzCQcCZqE4KR5SqDGV3WLgL+JgSEjVZOhHupqGJqkVa/TcUv8vQyvHrh+50RAVVtFHZkBZHwXS9mlGA2f7Qqg6mB7ZqxA7/Pf4CZEZJLyBxXQqXH5EwZOe5D4MxqNJH4R4KBW6i6YvZqK0tgNXGbKkB4UMJ5wcZRhQZLb0ZqYUPUNcqAZHB3GZoSqEUxiVb3BxqGaEGPcZrMGvwbPJfJ7R4PGxrVBOVLvI4v8AyXwZgz3qV4dHgQzjXPf+yvzxQBgxS9k8nYqm7b8Vw3mCwwGhGHq4RLlAN0rZxF4p+qxH8I5ufyQWo5Yw7JbAgMBAAECggEABZN5HaIVkS4ruXGm0YBXvQXPD9YzWYEj0ZQGIJBgHX9MBxBVCJHYqnZkLi1F+RxLRYfHzjQJPmDhUvFYQeZ0QxPJtPqDZbhBzuXE5QgwuAHBuJBQQEDIg5PSKxZ8Q4DR4JjbvtVE4oHRY0Y5qBwjr1VIQvmDZvh+Qj4hAVQIDAQAB"
+  public_key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmO3Pqk/BNflFQ/kulZ2BKoHewcwkHAmahOCkeUqgxld1i4C/iYEhI1WToR7qahiapFWv03FL/L0Mrx64fudEQFVbRR2ZAWR8F0vZpRgNn+0KoOpge2asQO/z3+AmRGSS8gcV0Klx+RMGTnuQ+DMajSR+EeCgVuoumL2aitLYDVxmypAeFDCecHGUYUGS29GamFD1DXKgGRwdxmaEqhFMYlW9wcahmhBj3GazBr8GzyXye0eDxsa1QTlS7yOL/AMl8GYM96leHR4EM41z3/sr88UAYMUvZPJ2Kpu2/FcN5gsMBoRh6uES5QDdK2cReKfqsR/CObj8kFqOWMOyWwIDAQAB"
+  notify_url: "https://backend-web-app-ca74ufzk.fly.dev/api/v1/payment/notify"
+  return_url: "https://frontend-web-app-ca74ufzk.devinapps.com/payment/success"
+  sandbox_mode: true
+
 # tencent cos configuration
 tencent-cos:
   bucket: xxxxx-10005608
@@ -206,15 +215,10 @@ Timer:
 # 跨域配置
 # 需要配合 server/initialize/router.go -> `Router.Use(middleware.CorsByRules())` 使用
 cors:
-  mode: whitelist # 放行模式: allow-all, 放行全部; whitelist, 白名单模式, 来自白名单内域名的请求添加 cors 头; strict-whitelist 严格白名单模式, 白名单外的请求一律拒绝
+  mode: whitelist
   whitelist:
-    - allow-origin: example1.com
-      allow-headers: content-type
-      allow-methods: GET, POST
-      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
-      allow-credentials: true # 布尔值
-    - allow-origin: example2.com
-      allow-headers: content-type
-      allow-methods: GET, POST
-      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
-      allow-credentials: true # 布尔值
+    - allow-origin: frontend-web-app-ca74ufzk.devinapps.com
+      allow-headers: content-type,authorization
+      allow-methods: GET, POST, PUT, DELETE, OPTIONS
+      expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type, Authorization
+      allow-credentials: true
