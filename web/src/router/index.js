@@ -16,6 +16,11 @@ const routes = [
     component: () => import('@/view/login/index.vue')
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/view/register/index.vue')
+  },
+  {
     path: '/:catchAll(.*)',
     meta: {
       closeTab: true
